@@ -958,5 +958,14 @@ def show_analytics():
         for month, avg in zip(months, monthly_avg):
             st.metric(month, f"{avg}", f"+{round(avg-84, 1)}")
 
+    # Footer with copyright
+    st.markdown("---")
+    st.markdown(
+        "<div style='text-align: center; color: #666; font-size: 0.8rem; padding: 1rem;'>"
+        "© 2025 Rodrigo Bermudez - Cafe Cultura LLC. All rights reserved."
+        "</div>", 
+        unsafe_allow_html=True
+    )
+
 if __name__ == "__main__":
     main()
