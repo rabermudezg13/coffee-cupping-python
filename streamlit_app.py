@@ -255,6 +255,15 @@ def main():
         show_login()
     else:
         show_main_app()
+    
+    # Footer with copyright - appears on all pages including login
+    st.markdown("---")
+    st.markdown(
+        "<div style='text-align: center; color: #666; font-size: 0.8rem; padding: 1rem;'>"
+        "© 2025 Rodrigo Bermudez - Cafe Cultura LLC. All rights reserved."
+        "</div>", 
+        unsafe_allow_html=True
+    )
 
 def show_login():
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -521,15 +530,6 @@ def show_main_app():
         show_profile()
     elif selected_page.endswith(get_text('analytics')):
         show_analytics()
-    
-    # Footer with copyright - appears on all pages
-    st.markdown("---")
-    st.markdown(
-        "<div style='text-align: center; color: #666; font-size: 0.8rem; padding: 1rem;'>"
-        "© 2025 Rodrigo Bermudez - Cafe Cultura LLC. All rights reserved."
-        "</div>", 
-        unsafe_allow_html=True
-    )
 
 def show_dashboard():
     st.title(f"📊 {get_text('dashboard')}")
