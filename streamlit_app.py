@@ -261,43 +261,217 @@ def show_login():
     
     with col2:
         st.markdown('<div class="coffee-card">', unsafe_allow_html=True)
-        st.subheader(f"🔐 {get_text('login')}")
         
-        st.info(f"**{get_text('demo_credentials')}:**\n\nEmail: demo@coffee.com\nPassword: demo123")
+        # Tabs for Login and Register
+        tab1, tab2, tab3 = st.tabs([
+            f"🔐 {get_text('login')}", 
+            f"🆕 {get_text('register')}", 
+            "👥 Guest"
+        ])
         
-        email = st.text_input(get_text("email"))
-        password = st.text_input(get_text("password"), type="password")
+        with tab1:
+            show_login_form()
         
-        col_a, col_b = st.columns(2)
-        with col_a:
-            if st.button(f"🚀 {get_text('login')}"):
-                if email == "demo@coffee.com" and password == "demo123":
-                    st.session_state.logged_in = True
-                    st.session_state.user_data = {
-                        'name': 'Demo User',
-                        'email': email,
-                        'company': 'Coffee Cultura LLC',
-                        'role': 'Q Grader',
-                        'member_since': 'January 2025'
-                    }
-                    st.success("✅ Login successful!")
-                    st.rerun()
-                else:
-                    st.error("❌ Invalid credentials")
+        with tab2:
+            show_register_form()
         
-        with col_b:
-            if st.button("👥 Guest Mode"):
-                st.session_state.logged_in = True
-                st.session_state.user_data = {
-                    'name': 'Guest User',
-                    'email': 'guest@demo.com',
-                    'company': 'Demo Company',
-                    'role': 'Coffee Enthusiast',
-                    'member_since': 'Today'
-                }
-                st.rerun()
+        with tab3:
+            show_guest_mode()
         
         st.markdown('</div>', unsafe_allow_html=True)
+
+def show_login_form():
+    st.markdown("### 🔐 Login to Your Account")
+    
+    st.info(f"**{get_text('demo_credentials')}:**\n\nEmail: demo@coffee.com\nPassword: demo123")
+    
+    email = st.text_input(get_text("email"), key="login_email")
+    password = st.text_input(get_text("password"), type="password", key="login_password")
+    remember_me = st.checkbox("🔒 Remember me", key="remember_login")
+    
+    if st.button(f"🚀 {get_text('login')}", use_container_width=True, key="login_btn"):
+        # Check demo credentials
+        if email == "demo@coffee.com" and password == "demo123":
+            st.session_state.logged_in = True
+            st.session_state.user_data = {
+                'name': 'Demo User',
+                'email': email,
+                'company': 'Coffee Cultura LLC',
+                'role': 'Q Grader',
+                'member_since': 'January 2025',
+                'user_type': 'demo'
+            }
+            st.success("✅ Demo login successful!")
+            st.rerun()
+        
+        # Check registered users
+        elif 'registered_users' in st.session_state and email in st.session_state.registered_users:
+            stored_user = st.session_state.registered_users[email]
+            if stored_user['password'] == password:  # In production, use hashed passwords
+                st.session_state.logged_in = True
+                st.session_state.user_data = {
+                    'name': stored_user['name'],
+                    'email': email,
+                    'company': stored_user['company'],
+                    'role': stored_user['role'],
+                    'member_since': stored_user['member_since'],
+                    'user_type': 'registered'
+                }
+                st.success("✅ Login successful!")
+                st.rerun()
+            else:
+                st.error("❌ Invalid password")
+        else:
+            st.error("❌ User not found. Please register first or use demo credentials.")
+
+def show_register_form():
+    st.markdown("### 🆕 Create New Account")
+    
+    with st.form("registration_form"):
+        st.markdown("#### 👤 Personal Information")
+        full_name = st.text_input("Full Name *", help="Your full name as it will appear in the app")
+        email = st.text_input("Email Address *", help="This will be your login username")
+        
+        st.markdown("#### 🔐 Security")
+        password = st.text_input("Password *", type="password", help="Minimum 6 characters")
+        confirm_password = st.text_input("Confirm Password *", type="password")
+        
+        st.markdown("#### ☕ Professional Information")
+        company = st.text_input("Company/Organization", help="Optional: Your workplace or organization")
+        role = st.selectbox("Your Role", [
+            "Coffee Enthusiast",
+            "Home Barista", 
+            "Professional Barista",
+            "Q Grader",
+            "Coffee Roaster",
+            "Café Owner",
+            "Coffee Trader",
+            "Coffee Producer",
+            "Coffee Consultant",
+            "Other"
+        ])
+        
+        st.markdown("#### ☕ Coffee Experience")
+        experience_level = st.selectbox("Cupping Experience", [
+            "Beginner (New to cupping)",
+            "Intermediate (Some experience)",
+            "Advanced (Regular cupper)",
+            "Expert (Professional level)"
+        ])
+        
+        favorite_origins = st.multiselect("Favorite Coffee Origins", [
+            "Ethiopia", "Colombia", "Brazil", "Guatemala", "Kenya", 
+            "Costa Rica", "Jamaica", "Yemen", "Panama", "Honduras",
+            "El Salvador", "Nicaragua", "Peru", "Bolivia", "Mexico"
+        ])
+        
+        st.markdown("#### 📋 Preferences")
+        newsletter = st.checkbox("📧 Subscribe to cupping tips and updates")
+        public_profile = st.checkbox("🌐 Make my profile visible to other users", value=True)
+        
+        terms_accepted = st.checkbox("✅ I agree to the Terms of Service and Privacy Policy *")
+        
+        submit_button = st.form_submit_button("🚀 Create Account", use_container_width=True)
+        
+        if submit_button:
+            # Validation
+            errors = []
+            
+            if not full_name.strip():
+                errors.append("❌ Full name is required")
+            
+            if not email.strip():
+                errors.append("❌ Email is required")
+            elif "@" not in email or "." not in email:
+                errors.append("❌ Please enter a valid email address")
+            
+            if not password:
+                errors.append("❌ Password is required")
+            elif len(password) < 6:
+                errors.append("❌ Password must be at least 6 characters")
+            
+            if password != confirm_password:
+                errors.append("❌ Passwords don't match")
+            
+            if not terms_accepted:
+                errors.append("❌ You must accept the Terms of Service")
+            
+            # Check if email already exists
+            if 'registered_users' in st.session_state and email in st.session_state.registered_users:
+                errors.append("❌ Email already registered. Please use a different email or login.")
+            
+            # Check if demo email
+            if email == "demo@coffee.com":
+                errors.append("❌ This email is reserved for demo purposes. Please use a different email.")
+            
+            if errors:
+                for error in errors:
+                    st.error(error)
+            else:
+                # Initialize registered users if not exists
+                if 'registered_users' not in st.session_state:
+                    st.session_state.registered_users = {}
+                
+                # Create new user
+                new_user = {
+                    'name': full_name.strip(),
+                    'password': password,  # In production, hash this!
+                    'company': company.strip() if company else "Independent",
+                    'role': role,
+                    'experience_level': experience_level,
+                    'favorite_origins': favorite_origins,
+                    'newsletter': newsletter,
+                    'public_profile': public_profile,
+                    'member_since': datetime.now().strftime('%B %Y'),
+                    'registration_date': datetime.now().isoformat(),
+                    'total_sessions': 0,
+                    'average_score': 0,
+                    'badges': []
+                }
+                
+                # Store user
+                st.session_state.registered_users[email] = new_user
+                
+                st.success("✅ Account created successfully!")
+                st.success("🎉 Welcome to the Coffee Cupping Community!")
+                st.info("You can now login with your new credentials in the Login tab.")
+                
+                # Show registration summary
+                st.markdown("### 📋 Registration Summary")
+                st.markdown(f"**Name:** {full_name}")
+                st.markdown(f"**Email:** {email}")
+                st.markdown(f"**Role:** {role}")
+                st.markdown(f"**Experience:** {experience_level}")
+                if favorite_origins:
+                    st.markdown(f"**Favorite Origins:** {', '.join(favorite_origins)}")
+
+def show_guest_mode():
+    st.markdown("### 👥 Guest Mode")
+    
+    st.info("""
+    **Guest Mode Features:**
+    - ✅ Full app functionality
+    - ✅ Create cupping sessions
+    - ✅ Use flavor wheel
+    - ✅ View analytics
+    - ⚠️ Data not saved permanently
+    - ⚠️ Limited to current session
+    """)
+    
+    guest_name = st.text_input("Your Name (Optional)", placeholder="Coffee Lover")
+    
+    if st.button("🚀 Enter as Guest", use_container_width=True):
+        st.session_state.logged_in = True
+        st.session_state.user_data = {
+            'name': guest_name if guest_name else 'Guest User',
+            'email': 'guest@demo.com',
+            'company': 'Guest Session',
+            'role': 'Coffee Enthusiast',
+            'member_since': 'Today',
+            'user_type': 'guest'
+        }
+        st.success("✅ Welcome, Guest!")
+        st.rerun()
 
 def show_main_app():
     user_data = st.session_state.get('user_data', {})
