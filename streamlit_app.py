@@ -188,7 +188,8 @@ def get_text(key):
             'analysis': 'Analysis',
             'recent_sessions': 'Recent Sessions',
             'score_trends': 'Score Trends',
-            'flavor_profile': 'Flavor Profile Distribution'
+            'flavor_profile': 'Flavor Profile Distribution',
+            'coffee_reviews': 'Coffee Reviews'
         },
         'es': {
             'app_title': '☕ App Profesional de Cata de Café',
@@ -218,7 +219,8 @@ def get_text(key):
             'analysis': 'Análisis',
             'recent_sessions': 'Sesiones Recientes',
             'score_trends': 'Tendencias de Puntaje',
-            'flavor_profile': 'Distribución de Perfil de Sabor'
+            'flavor_profile': 'Distribución de Perfil de Sabor',
+            'coffee_reviews': 'Reseñas de Café'
         }
     }
     return translations.get(get_language(), {}).get(key, key)
@@ -507,6 +509,7 @@ def show_main_app():
         pages = [
             f"📊 {get_text('dashboard')}",
             f"☕ {get_text('cupping_sessions')}",
+            f"📝 {get_text('coffee_reviews')}",
             f"👤 {get_text('profile')}",
             f"📈 {get_text('analytics')}"
         ]
@@ -526,6 +529,8 @@ def show_main_app():
         show_dashboard()
     elif selected_page.endswith(get_text('cupping_sessions')):
         show_cupping_sessions()
+    elif selected_page.endswith(get_text('coffee_reviews')):
+        show_coffee_reviews()
     elif selected_page.endswith(get_text('profile')):
         show_profile()
     elif selected_page.endswith(get_text('analytics')):
@@ -966,6 +971,69 @@ def show_analytics():
         
         for month, avg in zip(months, monthly_avg):
             st.metric(month, f"{avg}", f"+{round(avg-84, 1)}")
+
+def show_coffee_reviews():
+    st.title(f"📝 {get_text('coffee_reviews')}")
+    
+    st.markdown("### ☕ Coffee Bag Evaluation")
+    
+    with st.form("simple_coffee_review"):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            coffee_name = st.text_input("Coffee Name")
+            producer = st.text_input("Producer/Roaster")
+            origin = st.selectbox("Origin", ["", "Ethiopia", "Colombia", "Brazil", "Guatemala", "Other"])
+            cost = st.number_input("Cost (USD)", min_value=0.0, step=0.50, format="%.2f")
+            
+        with col2:
+            roast_level = st.selectbox("Roast Level", ["", "Light", "Medium", "Dark"])
+            coffee_form = st.radio("Form", ["Whole Bean", "Pre-Ground"])
+            preparation = st.selectbox("Preparation", ["", "Pour Over", "French Press", "Espresso", "Other"])
+            rating = st.select_slider("Rating", options=[1,2,3,4,5], value=3, format_func=lambda x: "⭐" * x)
+        
+        flavor_notes = st.text_area("Flavor Notes")
+        would_recommend = st.radio("Would recommend?", ["Yes", "Maybe", "No"])
+        would_buy_again = st.radio("Buy again?", ["Yes", "Maybe", "No"])
+        
+        if st.form_submit_button("Save Review"):
+            if coffee_name:
+                if 'coffee_reviews' not in st.session_state:
+                    st.session_state.coffee_reviews = []
+                
+                review = {
+                    'name': coffee_name,
+                    'producer': producer,
+                    'origin': origin,
+                    'cost': cost,
+                    'roast_level': roast_level,
+                    'form': coffee_form,
+                    'preparation': preparation,
+                    'rating': rating,
+                    'flavor_notes': flavor_notes,
+                    'recommend': would_recommend,
+                    'buy_again': would_buy_again,
+                    'date': datetime.now().strftime('%Y-%m-%d')
+                }
+                
+                st.session_state.coffee_reviews.append(review)
+                st.success("✅ Review saved!")
+            else:
+                st.error("Please enter a coffee name")
+    
+    # Show reviews
+    if 'coffee_reviews' in st.session_state and st.session_state.coffee_reviews:
+        st.markdown("### 📋 My Reviews")
+        for review in st.session_state.coffee_reviews:
+            st.markdown(f'''
+            <div class="coffee-card">
+                <h4>☕ {review["name"]}</h4>
+                <p>🌍 {review["origin"]} | 🏷️ {review["producer"]} | {'⭐' * review["rating"]}</p>
+                <p>💰 ${review["cost"]:.2f} | 🔥 {review["roast_level"]} | ☕ {review["preparation"]}</p>
+                <p><em>"{review["flavor_notes"]}"</em></p>
+                <p>👍 Recommend: {review["recommend"]} | 🔄 Buy again: {review["buy_again"]}</p>
+            </div>
+            ''', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
